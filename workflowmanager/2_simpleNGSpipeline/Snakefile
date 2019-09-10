@@ -12,9 +12,8 @@ samples = pd.read_table("config/samples.tsv")
 
 rule all:
     input:
-        expand("{data}/merged/counts_{which}.csv",
-                data = config['data'],
-                which = ['cleaned', 'cutup'])
+        expand("{data}/plot/tsne.png",
+                data = config['data'])
 
 
 rule gunzip:
@@ -40,24 +39,11 @@ rule cleanFasta:
             -s -p {wildcards.file} > {output}
         """
 
-rule cutupFasta:
+rule kmerCount:
     input:
         "{data}/cleaned/{file}.fna"
     output:
-        "{data}/cutup/{file}.fna"
-    params:
-        size = 10000
-    shell:
-        """
-        python3 scripts/cut_up_fasta.py -c {params.size} \
-            -m {input} > {output}
-        """
-
-rule kmerCount:
-    input:
-        "{data}/{which}/{file}.fna"
-    output:
-        "{data}/kmer/{file}_{which}.csv"
+        "{data}/kmer/{file}.csv"
     params:
         k = 4
     shell:
@@ -68,10 +54,10 @@ rule kmerCount:
 
 rule mergeData:
     input:
-        wordcounts = expand("{{data}}/kmer/{file}_{{which}}.csv", 
+        wordcounts = expand("{{data}}/kmer/{file}.csv", 
                              file = samples.genome)
     output:
-        "{data}/merged/counts_{which}.csv"
+        "{data}/merged/counts.csv"
     run:
         import pandas
         import os
@@ -84,3 +70,12 @@ rule mergeData:
         merged.to_csv(output[0], index = False)
 
 
+rule plot:
+    input:
+        "{data}/merged/counts.csv"
+    output:
+        "{data}/plot/tsne.png"
+    conda:
+        "envs/python3.yaml"
+    script:
+        "scripts/plot.py"
