@@ -3,7 +3,7 @@ import pandas as pd
 import seaborn as sns
 
 # load input
-X = pd.read_csv(snakemake.input)
+X = pd.read_csv(snakemake.input[0])
 names = X["file"].copy()
 X = X.drop(["Unnamed: 0", 'file'], axis = 1)
 
@@ -17,4 +17,4 @@ Xm['file'] = names
 
 # plot output
 sns_plot = sns.pairplot(x_vars=["x"], y_vars=["y"], data=Xm, hue="file", height=5) 
-sns_plot.savefig(snakemake.output)
+sns_plot.savefig(snakemake.output[0])
